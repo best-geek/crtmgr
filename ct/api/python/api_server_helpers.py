@@ -904,7 +904,7 @@ def user_apikeys_create_helper(request, for_user):
         return resp, 402
     
     
-    q = f"INSERT INTO users (username, type, created, expires, roles, owner) VALUES ('{identifier}', 'api', '{now}', '{expire_time}', '{json.dumps(data.get("roles", []))}', '{for_user}')"
+    q = f"INSERT INTO users (username, type, created, expires, roles, owner) VALUES ('{identifier}', 'api', '{now}', '{expire_time}', '{json.dumps(data.get('roles', []))}', '{for_user}')"
     insert = crtmgr_db.insert_query(q)
     if not insert:
         resp["errors"].append("issue saving new API key to db")

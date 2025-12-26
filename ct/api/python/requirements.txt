@@ -1,0 +1,6 @@
+PyJWT
+flask
+flask_cors
+jsonify
+toml
+gunicorn

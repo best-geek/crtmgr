@@ -1,0 +1,66 @@
+####################################
+# OS / Editor junk
+####################################
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.tmp
+
+####################################
+# Python
+####################################
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Python logs & runtime data
+*.log
+audit.log
+
+# Python virtualenvs (if ever used)
+.venv/
+venv/
+
+####################################
+# Node / Vue
+####################################
+node_modules/
+dist/
+.cache/
+
+
+####################################
+# Certificates & crypto material
+# (generated or environment-specific)
+####################################
+*.key
+*.pem
+*.csr
+*.srl
+
+# Cert storage (runtime)
+python/cert_store/
+ct/api/python/cert_store/
+
+####################################
+# Databases / state
+####################################
+*.db
+persistent_api/
+
+####################################
+# Docker / runtime
+####################################
+.env
+.env.*
+docker-compose.override.yml
+
+####################################
+# Misc
+####################################
+npm-debug.log*
+yarn-error.log*
+
+####################################

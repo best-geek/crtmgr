@@ -1,0 +1,18 @@
+FROM debian:stable-slim
+
+#install apache dependencies and packages
+RUN apt update -y && \
+        apt install python3 \
+        python3-pip \
+        dnsutils \
+        ansible \
+        rsync \
+        -y && \
+        rm -rf /var/cache/apt/archives
+
+
+
+COPY ./python/requirements.txt /tmp
+RUN pip3 install -r /tmp/requirements.txt --break-system-packages
+
+COPY init.sh init.sh

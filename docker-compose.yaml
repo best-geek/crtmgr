@@ -1,0 +1,49 @@
+services:
+
+# webUI
+  apache:
+    build: ./ct/apache
+    restart: always
+    container_name: crtmgr_ui
+    hostname: crtmgr_ui
+    healthcheck:
+      test: ['CMD','/healthcheck.sh']
+    command: ['./init.sh']
+
+    volumes:
+      - ./ct/apache/src/:/tmp/src:ro
+
+    ports:
+      - 8088:443/tcp
+
+    networks:
+      - crtmgr_net
+
+# API
+  api:
+    build: ./ct/api
+    restart: always
+    container_name: crtmgr_api
+    hostname: crtmgr_api
+    volumes:
+      - ./ct/api/python/:/code-source:ro
+      - ./persistent_api:/persistent:rw
+
+    # ports:
+    #  - 127.0.0.1:5001:5001/tcp
+
+    environment:
+      - RUN_PORT=5001
+      - CERT_DB_FP=/persistent/crtmgr.db
+      - CONF_APP=/persistent/config.conf
+      - CONF_SYSLOG=/persistent/syslog.conf
+
+    command: ['./init.sh', '-t','api', '-m','prod']
+
+    networks:
+      - crtmgr_net
+
+
+networks:
+  crtmgr_net:
+    driver: bridge

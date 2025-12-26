@@ -1,0 +1,18 @@
+FROM debian:stable-slim
+
+#install apache dependencies and packages
+RUN apt update -y && \
+	apt install apache2 \
+	inotify-tools \
+	-y && \
+	rm -rf /var/cache/apt/archives
+
+
+
+COPY ./apache_conf/website-ssl.conf /etc/apache2/sites-available/website-ssl.conf
+COPY ./certs/*.pem /etc/ssl/private/website.pem
+COPY ./certs/*.key /etc/ssl/private/website.key
+COPY healthcheck.sh healthcheck.sh
+COPY init.sh init.sh
+
+

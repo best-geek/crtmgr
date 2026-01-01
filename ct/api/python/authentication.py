@@ -98,7 +98,7 @@ def secure_hash_password(plain_text="", pass_salt=""):
 
 def create_jwt(username, secret, alg, ttl=0):
     crtmgr_db = crtmgr_database(bypass_exists=True)
-    user_record = crtmgr_db.select_query_dict(f"SELECT * FROM USERS WHERE username == '{username}'")
+    user_record = crtmgr_db.select_query_dict("SELECT * FROM USERS WHERE username == ?", params=(username,))
     user_record = user_record[0]
     
     if user_record.get("roles"):
@@ -230,7 +230,7 @@ def check_roles_jwt(request, allowed_roles=[]):
     
     username = jwt["sub"]
     crtmgr_db = crtmgr_database(bypass_exists=True)
-    user_record = crtmgr_db.select_query_dict(f"SELECT * FROM USERS WHERE username == '{username}'")
+    user_record = crtmgr_db.select_query_dict("SELECT * FROM USERS WHERE username == ?", params=(username,))
     if not user_record:
         return False
     user_record = user_record[0]
@@ -247,7 +247,7 @@ def user_login(username, password):
 
     result = {"success": False, "data": ""}
 
-    user_record = crtmgr_db.select_query_dict(f"SELECT * FROM USERS WHERE username == '{username}' AND type='user'")
+    user_record = crtmgr_db.select_query_dict("SELECT * FROM USERS WHERE username == ? AND type='user'", params=(username,))
 
     if not user_record:
         result["data"] = "Invalid user or password"
@@ -276,8 +276,8 @@ def create_admin_user():
     crtmgr_db = crtmgr_database(bypass_exists=True)
     username = APP_CONFIG["auth"]["default_user"]
     
-    q = f"DELETE FROM users WHERE username == '{username}'"
-    crtmgr_db.insert_query(q)
+    q = "DELETE FROM users WHERE username == ?"
+    crtmgr_db.insert_query(q, params=(username,))
  
     new_password = gen_salt()
     new_salt = gen_salt()

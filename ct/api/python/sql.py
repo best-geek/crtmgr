@@ -38,12 +38,12 @@ class crtmgr_database():
         
     
     
-    def insert_query(self,query, ignore_exists=False):
+    def insert_query(self,query, ignore_exists=False, params=()):
         con = sqlite3.connect(self.resolve_db_filepath())
         cur = con.cursor()
         query = self.sanitize(query)
         try:
-            cur.execute(query)
+            cur.execute(query, params)
             con.commit()
             logging.debug(f"Successful SQL insert - {query}")
             return True
@@ -59,9 +59,14 @@ class crtmgr_database():
             conn = sqlite3.connect(self.resolve_db_filepath())
             conn.row_factory = sqlite3.Row  # Enable dictionary-like access
             cursor = conn.cursor()
+            
+            print(query)
+
 
             cursor.execute(query, params)
             rows = cursor.fetchall()
+            
+
 
             # Convert sqlite3.Row objects to plain dicts
             dict_rows = []
@@ -70,12 +75,13 @@ class crtmgr_database():
             conn.close()
             return dict_rows
     
-    def select_query(self, query):
+    def select_query(self, query, params=()):
         query = self.sanitize(query)
         conn = sqlite3.connect(self.resolve_db_filepath())
         cursor = conn.cursor()
+        
 
-        cursor.execute(query)
+        cursor.execute(query, params)
         rows = cursor.fetchall()
 
         if rows:

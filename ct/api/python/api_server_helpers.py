@@ -682,8 +682,8 @@ def user_resetpassword_helper(request, for_user):
         return resp, 400
 
     # see if user is valid
-    q = f"SELECT username FROM users WHERE username ='{for_user}'"
-    user_record = crtmgr_db.select_query_dict(query=q)
+    q = "SELECT username FROM users WHERE username = ?"
+    user_record = crtmgr_db.select_query_dict(query=q, params=(for_user,))
     if not user_record:
         resp["errors"].append("user specified does not exist")
         audit_logger.error(f"Action=password_reset Error=not_exists Username={g.username} Target_user={for_user} Ip={g.src_ip} Useragent={g.user_agent}")
@@ -731,8 +731,8 @@ def user_create_helper(request, for_user):
         resp["errors"].append("roles must be present")
         return resp, 500
     
-    q = f"SELECT username, roles, created FROM users WHERE type='user' AND username ='{for_user}' "
-    user_record = crtmgr_db.select_query_dict(query=q)
+    q = "SELECT username, roles, created FROM users WHERE type='user' AND username = ? "
+    user_record = crtmgr_db.select_query_dict(query=q, params=(for_user,))
     user_record = user_record[0]
     user_roles = user_record.get("roles", '[]')
     user_roles = json.loads(user_roles)
@@ -753,8 +753,8 @@ def user_create_helper(request, for_user):
         return resp, 401
     
     # check if the user already exists
-    q = f"SELECT username, roles, created FROM users WHERE type='user' AND username ='{data['username']}' "
-    user_record = crtmgr_db.select_query_dict(query=q)
+    q = "SELECT username, roles, created FROM users WHERE type='user' AND username = ? "
+    user_record = crtmgr_db.select_query_dict(query=q, params=(data['username'],))
     if user_record:
         resp["errors"].append("username already exists")
         return resp, 500
@@ -795,12 +795,14 @@ def user_details_helper(for_user):
         return resp, 401
 
 
+    params = ()
     if for_user == "*":
-        q = f"SELECT username, roles, owner, created FROM users WHERE type='user'"
+        q = "SELECT username, roles, owner, created FROM users WHERE type='user'"
     else:
-        q = f"SELECT username, roles, owner, created FROM users WHERE username='{for_user}'"
+        q = "SELECT username, roles, owner, created FROM users WHERE username= ?"
+        params = (for_user,)
             
-    user_record = crtmgr_db.select_query_dict(query=q)
+    user_record = crtmgr_db.select_query_dict(query=q, params=params)
     if not user_record:
         resp["warnings"].append("empty results - likely malformed request")
         user_record=[]
@@ -819,14 +821,15 @@ def apikeys_details_helper(for_user):
         resp["errors"].append("request missing for_user")
         return resp, 401
 
-
+    params = ()
     if for_user == "*":
-        q = f"SELECT username, roles, created FROM users WHERE type='api'"
+        q = "SELECT username, roles, created FROM users WHERE type='api'"
     else:
-        q = f"SELECT username, roles, created FROM users WHERE owner='{for_user}' AND type='api'"
+        q = "SELECT username, roles, created FROM users WHERE owner= ? AND type='api'"
+        params = (for_user,)
         
             
-    user_record = crtmgr_db.select_query_dict(query=q)
+    user_record = crtmgr_db.select_query_dict(query=q, params=params)
     if not user_record:
         resp["warnings"].append("empty results - likely malformed request")
         user_record=[]
@@ -854,22 +857,22 @@ def user_apikeys_create_helper(request, for_user):
         return resp, 500
     
 
-    q = f"SELECT username, roles, created FROM users WHERE type='api' AND username ='{identifier}' "
-    user_record = crtmgr_db.select_query_dict(query=q)
+    q = "SELECT username, roles, created FROM users WHERE type='api' AND username = ?"
+    user_record = crtmgr_db.select_query_dict(query=q, params=(identifier,))
     if user_record:
         resp["errors"].append("key clash on creation - please resubmit request")
         return resp, 500
     
     # check we are not an API instance, trying to create another API key
-    q = f"SELECT username, roles, created FROM users WHERE type='api' AND username ='{for_user}' "
-    user_record = crtmgr_db.select_query_dict(query=q)
+    q = "SELECT username, roles, created FROM users WHERE type='api' AND username = ? "
+    user_record = crtmgr_db.select_query_dict(query=q, params=(for_user,))
     if user_record:
         resp["errors"].append("You cannot use an API key to create new API keys")
         return resp, 401
     
     # get users current roles
-    q = f"SELECT username, roles, created FROM users WHERE type='user' AND username ='{for_user}' "
-    user_record = crtmgr_db.select_query_dict(query=q)
+    q = "SELECT username, roles, created FROM users WHERE type='user' AND username = ? "
+    user_record = crtmgr_db.select_query_dict(query=q, params=(for_user,))
     user_record = user_record[0]
     user_roles = user_record.get("roles", '[]')
     user_roles = json.loads(user_roles)
@@ -897,15 +900,16 @@ def user_apikeys_create_helper(request, for_user):
     
     
     max_keys = APP_CONFIG.get("auth", {}).get("max_api_keys_user", 5)
-    q = f"SELECT username, roles, created FROM users WHERE type='api' AND owner ='{for_user}' AND expires > {now}"
-    api_records = crtmgr_db.select_query_dict(query=q)
+    q = "SELECT username, roles, created FROM users WHERE type='api' AND owner = ? AND expires > ?"
+    api_records = crtmgr_db.select_query_dict(query=q, params=(for_user, now,))
     if len(api_records) > max_keys:
         resp["errors"].append("exceeded API keys for user")
         return resp, 402
     
     
-    q = f"INSERT INTO users (username, type, created, expires, roles, owner) VALUES ('{identifier}', 'api', '{now}', '{expire_time}', '{json.dumps(data.get('roles', []))}', '{for_user}')"
-    insert = crtmgr_db.insert_query(q)
+    q = "INSERT INTO users (username, type, created, expires, roles, owner) VALUES (?, 'api', ?, ?, ?, ?)"
+    params = (identifier ,now, expire_time, json.dumps(data.get('roles', [])), for_user)
+    insert = crtmgr_db.insert_query(q, params=params)
     if not insert:
         resp["errors"].append("issue saving new API key to db")
         return resp, 500
@@ -923,8 +927,8 @@ def user_apikeys_list_helper(for_user):
     resp = base_response_schema()
     
     now = int(time.time())
-    q = f"SELECT username, roles, created, expires FROM users WHERE type='api' AND owner ='{for_user}' AND expires > {now}"
-    keys = crtmgr_db.select_query_dict(query=q)
+    q = "SELECT username, roles, created, expires FROM users WHERE type='api' AND owner = ? AND expires > ?"
+    keys = crtmgr_db.select_query_dict(query=q, params=(for_user, now, ))
     if not keys:
         keys = []
         
@@ -936,8 +940,8 @@ def user_apikeys_list_helper(for_user):
 def user_apikeys_delete_keyid_helper(for_user, keyid):
     resp = base_response_schema()
 
-    q = f"DELETE FROM users WHERE username = '{keyid}' AND owner = '{for_user}'"
-    res = crtmgr_db.insert_query(q)
+    q = f"DELETE FROM users WHERE username = ? AND owner = ?"
+    res = crtmgr_db.insert_query(q, params=(keyid, for_user))
     if not res:
         resp["warnings"].append("could not delete from certificates")
         return resp, 500
@@ -954,8 +958,8 @@ def user_profile_update_helper(request, for_user, source_user):
     if has_errors:
         return data, 500
     
-    q = f"SELECT username, roles, created FROM users WHERE type='user' AND username ='{for_user}' "
-    user_record = crtmgr_db.select_query_dict(query=q)
+    q = "SELECT username, roles, created FROM users WHERE type='user' AND username = ? "
+    user_record = crtmgr_db.select_query_dict(query=q, params=(for_user,))
     if not user_record:
         resp["errors"].append("User does not exist")
         return 400
@@ -976,8 +980,8 @@ def user_profile_update_helper(request, for_user, source_user):
     if data.get("roles"):
             
         # get source users current roles
-        q = f"SELECT username, roles, created FROM users WHERE type='user' AND username ='{source_user}' "
-        user_record = crtmgr_db.select_query_dict(query=q)
+        q = "SELECT username, roles, created FROM users WHERE type='user' AND username = ? "
+        user_record = crtmgr_db.select_query_dict(query=q, params=(source_user,))
         user_record = user_record[0]
         user_roles = user_record.get("roles", '[]')
         user_roles = json.loads(user_roles)

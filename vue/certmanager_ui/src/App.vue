@@ -44,7 +44,7 @@
 
           <router-link style="display: block; text-align: left; background: linear-gradient(to bottom right,
               rgba(255, 255, 255, 0.6),
-              rgba(255, 255, 255, 0) 70%)" to="/login">
+              rgba(255, 255, 255, 0) 70%)" to="/login" v-on:click="logout">
             <img class="icon" src="/icons/motion_blur.png">&nbsp;LOGOUT
           </router-link>
         </div>
@@ -92,6 +92,10 @@ import HorizontalLoader from './components/assets/HorizontalLoader.vue';
       }
     },
     methods: {
+      logout: function() {
+        localStorage.removeItem('crtmgr-jwt')
+      },
+ 
       toggleOpen: function () {
         this.open = !this.open
       },

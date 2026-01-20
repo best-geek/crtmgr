@@ -628,7 +628,7 @@ def list_certificates_helper():
 
     return resp, 200
 
-def user_login_helper(request):
+def user_login_helper(request, short:False):
     # set g.src ip here. Normally would get done through @authentication_required 
     # however, unauthenticated users can access this call so is not populated
     
@@ -653,7 +653,7 @@ def user_login_helper(request):
     username = data['username']
     password = data['password']
     
-    login_result = user_login(username, password)
+    login_result = user_login(username, password, short_token=short)
     if not login_result['success']:
         resp["errors"].append(login_result['data'])
         audit_logger.error(f"Action=password_fail Username={username} Ip={g.src_ip} Useragent={g.user_agent}")

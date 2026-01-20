@@ -242,7 +242,7 @@ def check_roles_jwt(request, allowed_roles=[]):
     
     return bool(matched_roles)
 
-def user_login(username, password):
+def user_login(username, password, short_token=False):
     crtmgr_db = crtmgr_database(bypass_exists=True)
 
     result = {"success": False, "data": ""}
@@ -265,7 +265,10 @@ def user_login(username, password):
 
     alg = APP_CONFIG.get("jwt", {}).get("alg", "HS256")
 
-    jwt = create_jwt(username=username, secret=secret, alg=alg)
+    if short_token:
+        jwt = create_jwt(username=username, secret=secret, alg=alg, ttl=5)
+    else:
+        jwt = create_jwt(username=username, secret=secret, alg=alg)
 
     result["success"] = True
     result["data"] = jwt

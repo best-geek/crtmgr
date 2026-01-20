@@ -5,7 +5,7 @@ The application offers a number of features to achieve this:
 - A basic authentication mechanism that supports multiple users. This also supports session tokens to reduce the number of requests containing usernames and passwords.
 - A user permission system that controls the capabilities each user account can have.
 - Ability to create certificate authorities (and certificates) via a programmatic interface.
-- Reviewing relationships between parents and child certificates
+- Reviewing relationships between parents and child certificates.
 - Per-user API key creation to support the retrieval or creation of certificates via basic CLI commands.
 - Capability to send audit logs via Syslog for enhanced monitoring.
 
@@ -19,6 +19,7 @@ The following core dependencies are required:
 - Docker (note that a Linux base system is preferred).
 - Docker Compose.
 - npm (if opting to manually build the VueJS application).
+- pytest (if opting to build from source)
 
 
 This application uses Docker containers to support operations. Within the root of this repository, run `docker compose build` to build for the architecture of your system. Once the build is complete, run `docker compose up -d`. 
@@ -43,11 +44,12 @@ You can now use this password with the username `manager` to proceed with loggin
 
 The `manager` user is a built-in superuser and should be closely monitored. For this reason, it is best practice to create user accounts for your needs, rather than rely on this user for general operations.
 
+The password can also be manually recovered by running `reset_admin_pw.sh` in the root of this repository.
 
 ## API Getting Started
-Now that you are logged in, you can create an API key for your user. This can be done from the `settings` menu. When creating a key, carefully select the relevant permissions; once a key has been created, the permissions cannot be changed. A user may have **8** API keys associated with an account. 
+Now that you are logged in, you can create an API key for your user. This can be done from the `settings` menu. When creating a key, carefully select the relevant permissions; once a key has been created, its permissions cannot be changed. A user may have **8** API keys associated with an account. 
 
-The API keys are JWT's and their information can be viewed by decoding tools. The owner (*own*) and permissions (*roles_at_iat*) may be useful in diagnosing issues.
+The API keys are JWT's and their information can be viewed by decoding tools. The owner (*own*) and permissions (*roles_at_iat*) may be useful in diagnosing permission issues.
 
 ### Documentation
 The API documentation is available at `/apidocs` and also available in the top right context menu.
@@ -61,15 +63,17 @@ curl 'http://127.0.0.1:5001/download/certificate/<AUTHORITY ID>/<CERTIFICATE NAM
 
 
 ## Backup Data
-Data can be periodically backed up by taking copies of the `persistent_api` folder within the root of this repository. If the folder does not exist, it is likely because the container has not yet been started. 
+Data can be periodically backed up by taking copies of the `persistent_api` folder within the root of this repository. If the folder does not exist, it is likely because the container has not yet been started for the first time. 
 
 This folder will include all running application configurations, the base database and any associated certificates and authorities.
 
 
 ## Perform a Complete Build
-To make modifications, these should be made within the `python` and `vue` directories and associated component folders. Unless specifically editing properties of the Docker runtime, do not edit anything within the `ct` directory, as this may be overwritten during a full build.
+To make modifications, these should be made within the `python` and `vue` directories and associated component folders. 
 
-If you have made modifications to either the VueJS or Python components of this application, you can run `./build_prod` from the root of this directory.
+Unless specifically editing properties of the Docker runtime, do not edit anything within the `ct` directory, as this may be overwritten during a full build.
+
+If you have made modifications to either the VueJS or Python components of this application, you can run `./build_prod` from the root of this directory. This script will also run a series of unit tests to confirm API functionality.
 
 
 ## Future Development
@@ -79,3 +83,7 @@ However, there are a couple of ideas I'd like to see if I could implement in the
 - MFA for interactive user logins.
 - Automatic renewal for child certificates.
 - Some implementation that supports ACME challenges and would support something like [LetsEncrypt](https://letsencrypt.org/docs/challenge-types/).
+
+## Known Issues
+- When running in Docker on MacOS, syslog output may not provide an accurate source IP for requests. This is due to Docker running a VM on top of MacOS, and introduces NAT into the network stack. 
+- When running the API server in development mode (such as manual invocation) setting syslog config will result in a complete exit. This is a design choice, as when running in a Docker container it will restart automatically.

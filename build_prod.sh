@@ -1,11 +1,19 @@
 #!/bin/bash
-set -e
+set -e # Any failure should not pass push to prod
 
 echo "[i] Starting build $(date)"
 
 echo "[i] Making persistent location for container"
 mkdir -p persistent_api
 echo "[✓] Persistent location created"
+
+
+# validate current Python build validates tests
+echo "[i] Running Python tests.."
+cd python
+pytest all_test.py
+cd ..
+echo "[✓] Python tests complete. "
 
 
 

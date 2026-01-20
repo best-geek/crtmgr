@@ -161,7 +161,12 @@ def download_certificate(ca_id, cert_name):
 
 @app.route("/user/login/", methods=["POST"])
 def user_login():
-    result, code = user_login_helper(request)
+    short = request.args.get("short", "")
+    if short == "true":
+        short = True
+    else:
+        short = False 
+    result, code = user_login_helper(request, short)
     return jsonify(result), code
 
 @app.route("/user/resetpassword/<for_user>/", methods=["POST"])
